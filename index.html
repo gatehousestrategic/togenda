@@ -8,6 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Togenda">
+  <link rel="icon" type="image/svg+xml" href="/icon.svg">
   <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="/icon.svg">
   <link rel="stylesheet" href="/styles.css">
@@ -22,15 +23,26 @@
       <img src="/icon.svg" alt="Togenda" class="setup-icon">
       <h1>Togenda</h1>
       <p>Sign in with your email and password.</p>
-      <input id="si-email" type="email" placeholder="Email" autocomplete="email" inputmode="email">
-      <input id="si-password" type="password" placeholder="Password" autocomplete="current-password">
+      <input id="si-email" type="email" placeholder="Email"
+             autocomplete="email" inputmode="email">
+      <input id="si-password" type="password" placeholder="Password"
+             autocomplete="current-password">
       <div id="si-error" class="auth-error hidden"></div>
       <button id="si-submit" class="btn-primary">Sign In</button>
       <p class="auth-note">Don't have access? Ask the calendar owner to invite you.</p>
     </div>
   </div>
 
-  <!-- ── Name setup (first visit) ─────────────────────────────── -->
+  <!-- ── Config error ─────────────────────────────────────────── -->
+  <div id="config-error" class="screen hidden">
+    <div class="setup-card">
+      <div class="setup-icon" style="font-size:3rem">⚠️</div>
+      <h1>Setup needed</h1>
+      <p>Open <strong>config.js</strong> and fill in your Supabase URL and anon key, then redeploy.</p>
+    </div>
+  </div>
+
+  <!-- ── Name setup ────────────────────────────────────────────── -->
   <div id="name-setup" class="screen hidden">
     <div class="setup-card">
       <img src="/icon.svg" alt="Togenda" class="setup-icon">
@@ -42,43 +54,93 @@
     </div>
   </div>
 
-  <!-- ── Config missing warning ────────────────────────────────── -->
-  <div id="config-error" class="screen hidden">
-    <div class="setup-card">
-      <div class="setup-icon" style="font-size:3rem">⚠️</div>
-      <h1>Setup needed</h1>
-      <p>Open <strong>config.js</strong> and fill in your Supabase URL and anon key, then redeploy.</p>
-    </div>
-  </div>
-
-  <!-- ── Main app ──────────────────────────────────────────────── -->
+  <!-- ── Main App ──────────────────────────────────────────────── -->
   <div id="main-app" class="screen hidden">
 
-    <header class="cal-header">
+    <!-- Dashboard header -->
+    <header id="header-dashboard" class="cal-header">
+      <div class="header-brand">
+        <img src="/icon.svg" alt="" class="header-logo">
+        <span class="header-title">Togenda</span>
+      </div>
+      <button id="signout-btn" class="icon-btn" style="font-size:1rem;color:var(--muted)"
+              title="Sign out" aria-label="Sign out">Sign out</button>
+    </header>
+
+    <!-- Calendar header -->
+    <header id="header-calendar" class="cal-header hidden">
       <button id="prev-month" class="icon-btn" aria-label="Previous month">‹</button>
       <div class="header-center">
         <h2 id="month-year"></h2>
-        <span id="greeting" class="greeting"></span>
+        <button id="cal-today-btn" class="cal-today-link">Today</button>
       </div>
       <button id="next-month" class="icon-btn" aria-label="Next month">›</button>
-      <button id="signout-btn" class="icon-btn signout-btn" title="Sign out" aria-label="Sign out">⎋</button>
     </header>
 
-    <div class="dow-row" aria-hidden="true">
+    <!-- Day-of-week row (calendar only) -->
+    <div id="dow-row" class="dow-row hidden" aria-hidden="true">
       <span>S</span><span>M</span><span>T</span>
       <span>W</span><span>T</span><span>F</span><span>S</span>
     </div>
 
-    <div id="cal-grid" class="cal-grid"></div>
+    <!-- View container -->
+    <div class="view-container">
 
-    <div class="bottom-bar">
-      <button id="today-btn" class="btn-ghost">Today</button>
-      <button id="add-btn" class="btn-primary">+ Add Event</button>
-    </div>
+      <!-- Dashboard view -->
+      <div id="view-dashboard" class="view">
+        <div class="dash-scroll">
 
-  </div>
+          <div class="dash-hero">
+            <div id="dash-date" class="dash-date"></div>
+            <div id="dash-sub" class="dash-sub"></div>
+          </div>
 
-  <!-- ── Day sheet (slides up on day tap) ─────────────────────── -->
+          <section class="dash-section">
+            <div class="section-header">
+              <h3 class="section-title">Today</h3>
+              <button id="dash-add-today" class="btn-small">+ Add</button>
+            </div>
+            <div id="dash-today-list" class="dash-list"></div>
+          </section>
+
+          <section class="dash-section">
+            <h3 class="section-title">Upcoming</h3>
+            <div id="dash-upcoming-list" class="dash-list"></div>
+          </section>
+
+          <div style="height:1rem"></div>
+        </div>
+      </div>
+
+      <!-- Calendar view -->
+      <div id="view-calendar" class="view hidden">
+        <div id="cal-grid" class="cal-grid"></div>
+      </div>
+
+    </div><!-- .view-container -->
+
+    <!-- Floating add button -->
+    <button id="fab-add" class="fab" aria-label="Add event">+</button>
+
+    <!-- Tab navigation -->
+    <nav class="tab-nav">
+      <button class="tab-btn active" id="tab-dashboard">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+        </svg>
+        <span class="tab-label">Today</span>
+      </button>
+      <button class="tab-btn" id="tab-calendar">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        <span class="tab-label">Calendar</span>
+      </button>
+    </nav>
+
+  </div><!-- #main-app -->
+
+  <!-- ── Day sheet ─────────────────────────────────────────────── -->
   <div id="day-sheet" class="sheet" aria-modal="true" role="dialog">
     <div class="sheet-handle"></div>
     <div class="sheet-header">
@@ -87,22 +149,20 @@
     </div>
     <div id="sheet-events-list" class="sheet-events"></div>
   </div>
-  <div id="sheet-backdrop" class="backdrop" data-close="sheet"></div>
+  <div id="sheet-backdrop" class="backdrop"></div>
 
-  <!-- ── Event modal (add / edit) ──────────────────────────────── -->
+  <!-- ── Event modal ────────────────────────────────────────────── -->
   <div id="event-modal" class="modal" aria-modal="true" role="dialog">
     <div class="modal-content">
       <div class="modal-header">
         <h3 id="modal-heading">New Event</h3>
         <button id="modal-close" class="icon-btn" aria-label="Close">✕</button>
       </div>
-
       <form id="event-form" novalidate>
         <div class="form-group">
           <input id="evt-title" type="text" placeholder="Event title"
                  required maxlength="100" autocomplete="off">
         </div>
-
         <div class="form-group toggle-row">
           <label for="evt-allday">All day</label>
           <label class="switch">
@@ -110,12 +170,10 @@
             <span class="slider"></span>
           </label>
         </div>
-
         <div class="form-group">
           <label class="form-label" for="evt-date">Date</label>
           <input id="evt-date" type="date" required>
         </div>
-
         <div id="time-fields" class="form-row-2">
           <div class="form-group">
             <label class="form-label" for="evt-start">Start</label>
@@ -126,7 +184,6 @@
             <input id="evt-end" type="time">
           </div>
         </div>
-
         <div class="form-group">
           <label class="form-label" for="evt-reminder">Reminder</label>
           <select id="evt-reminder">
@@ -138,17 +195,14 @@
             <option value="2880">2 days before</option>
           </select>
         </div>
-
         <div class="form-group">
           <label class="form-label" for="evt-notes">Notes</label>
           <textarea id="evt-notes" placeholder="Optional notes…" rows="2"></textarea>
         </div>
-
         <div class="form-group">
           <label class="form-label">Color</label>
           <div id="color-picker" class="color-picker" role="radiogroup" aria-label="Event color"></div>
         </div>
-
         <div class="form-actions">
           <button type="button" id="delete-btn" class="btn-danger hidden">Delete</button>
           <button type="submit" id="save-btn" class="btn-primary">Save</button>
@@ -156,9 +210,8 @@
       </form>
     </div>
   </div>
-  <div id="modal-backdrop" class="backdrop" data-close="modal"></div>
+  <div id="modal-backdrop" class="backdrop"></div>
 
-  <!-- ── Scripts ───────────────────────────────────────────────── -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="/config.js"></script>
   <script src="/app.js"></script>
