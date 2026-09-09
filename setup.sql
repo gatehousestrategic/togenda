@@ -13,14 +13,16 @@ create table if not exists events (
   created_at  timestamptz default now()
 );
 
--- Allow anyone with the anon key to read/write (shared calendar)
+-- Only signed-in users can read/write events
 alter table events enable row level security;
 
-create policy "shared calendar access" on events
+drop policy if exists "shared calendar access" on events;
+
+create policy "authenticated users only" on events
   for all
-  to anon
-  using (true)
-  with check (true);
+  to authenticated
+  using (auth.uid() is not null)
+  with check (auth.uid() is not null);
 
 -- Enable real-time updates
 alter publication supabase_realtime add table events;

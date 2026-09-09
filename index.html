@@ -16,6 +16,20 @@
 <body>
 <div id="app-frame">
 
+  <!-- ── Sign-in ──────────────────────────────────────────────── -->
+  <div id="sign-in" class="screen hidden">
+    <div class="setup-card">
+      <img src="/icon.svg" alt="Togenda" class="setup-icon">
+      <h1>Togenda</h1>
+      <p>Sign in with your email and password.</p>
+      <input id="si-email" type="email" placeholder="Email" autocomplete="email" inputmode="email">
+      <input id="si-password" type="password" placeholder="Password" autocomplete="current-password">
+      <div id="si-error" class="auth-error hidden"></div>
+      <button id="si-submit" class="btn-primary">Sign In</button>
+      <p class="auth-note">Don't have access? Ask the calendar owner to invite you.</p>
+    </div>
+  </div>
+
   <!-- ── Name setup (first visit) ─────────────────────────────── -->
   <div id="name-setup" class="screen hidden">
     <div class="setup-card">
@@ -47,6 +61,7 @@
         <span id="greeting" class="greeting"></span>
       </div>
       <button id="next-month" class="icon-btn" aria-label="Next month">›</button>
+      <button id="signout-btn" class="icon-btn signout-btn" title="Sign out" aria-label="Sign out">⎋</button>
     </header>
 
     <div class="dow-row" aria-hidden="true">

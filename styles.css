@@ -95,12 +95,35 @@ body {
 
 .hidden { display: none !important; }
 
-/* ── Name Setup ───────────────────────────────────────────────── */
-#name-setup, #config-error {
+/* ── Sign-in / Name Setup / Config Error ─────────────────────── */
+#sign-in, #name-setup, #config-error {
   background: var(--bg);
   align-items: center;
   justify-content: center;
   padding: 2rem;
+}
+
+.auth-error {
+  width: 100%;
+  background: #fee2e2;
+  color: #b91c1c;
+  border-radius: 10px;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.auth-note {
+  font-size: 0.78rem;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.4;
+}
+
+.signout-btn {
+  font-size: 1.1rem;
+  color: var(--muted);
+  margin-left: -6px;
 }
 
 .setup-card {

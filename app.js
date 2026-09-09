@@ -53,7 +53,6 @@ function localDatetime(dateStr, timeStr) {
 
 /* ── Boot ───────────────────────────────────────────────────────── */
 window.addEventListener('DOMContentLoaded', () => {
-  // Check config
   if (
     typeof SUPABASE_URL === 'undefined' ||
     SUPABASE_URL.includes('YOUR_PROJECT_ID') ||
@@ -70,19 +69,75 @@ window.addEventListener('DOMContentLoaded', () => {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
   }
 
-  const name = localStorage.getItem('cal_name');
-  if (!name) {
-    show('name-setup');
-    setupNameScreen();
-  } else {
-    startApp();
-  }
+  // Listen for auth state changes (handles magic-link redirects too)
+  db.auth.onAuthStateChange((event, session) => {
+    if (session) {
+      hide('sign-in');
+      const name = localStorage.getItem('cal_name');
+      if (!name) {
+        show('name-setup');
+        setupNameScreen();
+      } else {
+        hide('name-setup');
+        startApp();
+      }
+    } else {
+      hide('main-app');
+      hide('name-setup');
+      show('sign-in');
+      setupSignIn();
+    }
+  });
 });
+
+/* ── Sign-in screen ─────────────────────────────────────────────── */
+function setupSignIn() {
+  const emailEl  = document.getElementById('si-email');
+  const passEl   = document.getElementById('si-password');
+  const submitEl = document.getElementById('si-submit');
+  const errorEl  = document.getElementById('si-error');
+
+  // Remove old listeners by replacing nodes
+  const newSubmit = submitEl.cloneNode(true);
+  submitEl.parentNode.replaceChild(newSubmit, submitEl);
+
+  async function doSignIn() {
+    const email    = emailEl.value.trim();
+    const password = passEl.value;
+    if (!email || !password) return;
+
+    newSubmit.disabled = true;
+    newSubmit.textContent = 'Signing in…';
+    errorEl.classList.add('hidden');
+
+    const { error } = await db.auth.signInWithPassword({ email, password });
+
+    newSubmit.disabled = false;
+    newSubmit.textContent = 'Sign In';
+
+    if (error) {
+      errorEl.textContent = 'Incorrect email or password.';
+      errorEl.classList.remove('hidden');
+      passEl.value = '';
+      passEl.focus();
+    }
+    // on success, onAuthStateChange fires automatically
+  }
+
+  newSubmit.addEventListener('click', doSignIn);
+  [emailEl, passEl].forEach(el => {
+    el.addEventListener('keydown', e => { if (e.key === 'Enter') doSignIn(); });
+  });
+  setTimeout(() => emailEl.focus(), 100);
+}
 
 /* ── Name screen ────────────────────────────────────────────────── */
 function setupNameScreen() {
   const input  = document.getElementById('name-input');
   const submit = document.getElementById('name-submit');
+
+  const newSubmit = submit.cloneNode(true);
+  submit.parentNode.replaceChild(newSubmit, submit);
 
   function confirmName() {
     const v = input.value.trim();
@@ -92,7 +147,7 @@ function setupNameScreen() {
     startApp();
   }
 
-  submit.addEventListener('click', confirmName);
+  newSubmit.addEventListener('click', confirmName);
   input.addEventListener('keydown', e => { if (e.key === 'Enter') confirmName(); });
   setTimeout(() => input.focus(), 100);
 }
@@ -461,6 +516,13 @@ function scheduleReminders() {
 
 /* ── Event listeners ────────────────────────────────────────────── */
 function attachListeners() {
+  // Sign out
+  document.getElementById('signout-btn').addEventListener('click', async () => {
+    if (!confirm('Sign out?')) return;
+    await db.auth.signOut();
+    // onAuthStateChange will redirect to sign-in
+  });
+
   // Month navigation
   document.getElementById('prev-month').addEventListener('click', () => {
     viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1);
