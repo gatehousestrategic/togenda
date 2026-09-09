@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#6366f1">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Togenda">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icon.svg">
+  <link rel="stylesheet" href="/styles.css">
+  <title>Togenda</title>
+</head>
+<body>
+
+  <!-- ── Name setup (first visit) ─────────────────────────────── -->
+  <div id="name-setup" class="screen hidden">
+    <div class="setup-card">
+      <img src="/icon.svg" alt="Togenda" class="setup-icon">
+      <h1>Togenda</h1>
+      <p>Enter your name so others can see who added events.</p>
+      <input id="name-input" type="text" placeholder="Your name"
+             autocomplete="given-name" maxlength="30" spellcheck="false">
+      <button id="name-submit" class="btn-primary">Get Started</button>
+    </div>
+  </div>
+
+  <!-- ── Config missing warning ────────────────────────────────── -->
+  <div id="config-error" class="screen hidden">
+    <div class="setup-card">
+      <div class="setup-icon" style="font-size:3rem">⚠️</div>
+      <h1>Setup needed</h1>
+      <p>Open <strong>config.js</strong> and fill in your Supabase URL and anon key, then redeploy.</p>
+    </div>
+  </div>
+
+  <!-- ── Main app ──────────────────────────────────────────────── -->
+  <div id="main-app" class="screen hidden">
+
+    <header class="cal-header">
+      <button id="prev-month" class="icon-btn" aria-label="Previous month">‹</button>
+      <div class="header-center">
+        <h2 id="month-year"></h2>
+        <span id="greeting" class="greeting"></span>
+      </div>
+      <button id="next-month" class="icon-btn" aria-label="Next month">›</button>
+    </header>
+
+    <div class="dow-row" aria-hidden="true">
+      <span>S</span><span>M</span><span>T</span>
+      <span>W</span><span>T</span><span>F</span><span>S</span>
+    </div>
+
+    <div id="cal-grid" class="cal-grid"></div>
+
+    <div class="bottom-bar">
+      <button id="today-btn" class="btn-ghost">Today</button>
+      <button id="add-btn" class="btn-primary">+ Add Event</button>
+    </div>
+
+  </div>
+
+  <!-- ── Day sheet (slides up on day tap) ─────────────────────── -->
+  <div id="day-sheet" class="sheet" aria-modal="true" role="dialog">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <h3 id="sheet-date-label"></h3>
+      <button id="sheet-add-btn" class="btn-small">+ Add</button>
+    </div>
+    <div id="sheet-events-list" class="sheet-events"></div>
+  </div>
+  <div id="sheet-backdrop" class="backdrop" data-close="sheet"></div>
+
+  <!-- ── Event modal (add / edit) ──────────────────────────────── -->
+  <div id="event-modal" class="modal" aria-modal="true" role="dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-heading">New Event</h3>
+        <button id="modal-close" class="icon-btn" aria-label="Close">✕</button>
+      </div>
+
+      <form id="event-form" novalidate>
+        <div class="form-group">
+          <input id="evt-title" type="text" placeholder="Event title"
+                 required maxlength="100" autocomplete="off">
+        </div>
+
+        <div class="form-group toggle-row">
+          <label for="evt-allday">All day</label>
+          <label class="switch">
+            <input id="evt-allday" type="checkbox">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="evt-date">Date</label>
+          <input id="evt-date" type="date" required>
+        </div>
+
+        <div id="time-fields" class="form-row-2">
+          <div class="form-group">
+            <label class="form-label" for="evt-start">Start</label>
+            <input id="evt-start" type="time">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="evt-end">End</label>
+            <input id="evt-end" type="time">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="evt-reminder">Reminder</label>
+          <select id="evt-reminder">
+            <option value="">No reminder</option>
+            <option value="10">10 min before</option>
+            <option value="30">30 min before</option>
+            <option value="60">1 hour before</option>
+            <option value="1440">1 day before</option>
+            <option value="2880">2 days before</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="evt-notes">Notes</label>
+          <textarea id="evt-notes" placeholder="Optional notes…" rows="2"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Color</label>
+          <div id="color-picker" class="color-picker" role="radiogroup" aria-label="Event color"></div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" id="delete-btn" class="btn-danger hidden">Delete</button>
+          <button type="submit" id="save-btn" class="btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div id="modal-backdrop" class="backdrop" data-close="modal"></div>
+
+  <!-- ── Scripts ───────────────────────────────────────────────── -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="/config.js"></script>
+  <script src="/app.js"></script>
+
+</body>
+</html>
