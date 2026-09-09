@@ -24,5 +24,12 @@ create policy "authenticated users only" on events
   using (auth.uid() is not null)
   with check (auth.uid() is not null);
 
--- Enable real-time updates
-alter publication supabase_realtime add table events;
+-- Enable real-time updates (safe to re-run)
+do $$ begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and tablename = 'events'
+  ) then
+    alter publication supabase_realtime add table events;
+  end if;
+end $$;

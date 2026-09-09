@@ -172,6 +172,11 @@ body {
   letter-spacing: -0.01em;
 }
 
+.header-actions { display: flex; align-items: center; gap: 0.1rem; }
+
+.header-icon-btn { color: var(--muted); width: 38px; height: 38px; }
+.header-icon-btn:hover { color: var(--text); }
+
 .header-center {
   flex: 1;
   text-align: center;

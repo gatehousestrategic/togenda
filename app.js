@@ -699,6 +699,15 @@ function attachListeners() {
     await db.auth.signOut();
   });
 
+  // Invite
+  document.getElementById('invite-btn').addEventListener('click', openInviteModal);
+  document.getElementById('invite-close').addEventListener('click', closeInviteModal);
+  document.getElementById('invite-backdrop').addEventListener('click', closeInviteModal);
+  document.getElementById('invite-submit').addEventListener('click', sendInvite);
+  document.getElementById('invite-email').addEventListener('keydown', e => {
+    if (e.key === 'Enter') sendInvite();
+  });
+
   // All-day toggle
   document.getElementById('evt-allday').addEventListener('change', toggleTimeFields);
 
@@ -727,6 +736,68 @@ function attachListeners() {
   banner.id = 'notif-banner';
   banner.innerHTML = `<span>Enable reminders?</span><button>Allow</button>`;
   document.getElementById('app-frame').appendChild(banner);
+}
+
+/* ── Invite ─────────────────────────────────────────────────────── */
+function openInviteModal() {
+  document.getElementById('invite-email').value = '';
+  document.getElementById('invite-status').classList.add('hidden');
+  document.getElementById('invite-submit').disabled = false;
+  document.getElementById('invite-submit').textContent = 'Send Invite';
+  document.getElementById('invite-modal').classList.add('open');
+  document.getElementById('invite-backdrop').classList.add('visible');
+  setTimeout(() => document.getElementById('invite-email').focus(), 300);
+}
+
+function closeInviteModal() {
+  document.getElementById('invite-modal').classList.remove('open');
+  document.getElementById('invite-backdrop').classList.remove('visible');
+}
+
+async function sendInvite() {
+  const email  = document.getElementById('invite-email').value.trim();
+  const status = document.getElementById('invite-status');
+  const btn    = document.getElementById('invite-submit');
+
+  if (!email || !email.includes('@')) {
+    showInviteStatus('Enter a valid email address.', false);
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+  status.classList.add('hidden');
+
+  try {
+    const { data: { session } } = await db.auth.getSession();
+    const res = await fetch('/api/invite', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ email }),
+    });
+
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || 'Unknown error');
+
+    showInviteStatus(`Invite sent to ${email}!`, true);
+    document.getElementById('invite-email').value = '';
+  } catch (err) {
+    showInviteStatus(err.message, false);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Send Invite';
+  }
+}
+
+function showInviteStatus(msg, success) {
+  const el = document.getElementById('invite-status');
+  el.textContent = msg;
+  el.style.background = success ? '#d1fae5' : '#fee2e2';
+  el.style.color      = success ? '#065f46' : '#b91c1c';
+  el.classList.remove('hidden');
 }
 
 /* ── Helpers ────────────────────────────────────────────────────── */
