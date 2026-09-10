@@ -319,17 +319,15 @@ body {
   line-height: 1.4;
 }
 .holiday-bar--jewish       { background: #d97706; color: white; }
-.holiday-bar--jewish-minor { background: transparent; color: #d97706; border-left: 2px solid #d97706; padding-left: 4px; font-style: italic; font-weight: 500; }
+.holiday-bar--jewish-minor { background: transparent; color: #92400e; font-style: italic; font-weight: 400; font-size: 0.52rem; padding-left: 2px; }
 .holiday-bar--us           { background: #2563eb; color: white; }
 
 /* Cell shading on holiday days */
 .cal-cell.has-holiday-jewish       { background: #fffbeb; }
-.cal-cell.has-holiday-jewish-minor { background: #fffef5; }
 .cal-cell.has-holiday-us           { background: #eff6ff; }
 @media (prefers-color-scheme: dark) {
-  .cal-cell.has-holiday-jewish       { background: #1c1505; }
-  .cal-cell.has-holiday-jewish-minor { background: #141200; }
-  .cal-cell.has-holiday-us           { background: #05101f; }
+  .cal-cell.has-holiday-jewish { background: #1c1505; }
+  .cal-cell.has-holiday-us     { background: #05101f; }
 }
 
 .more-label { font-size: 0.55rem; color: var(--muted); padding: 0 2px; }
@@ -420,7 +418,7 @@ body {
   align-self: stretch;
 }
 .holiday-stripe--jewish       { background: #d97706; }
-.holiday-stripe--jewish-minor { background: #fcd34d; }
+.holiday-stripe--jewish-minor { background: #fde68a; width: 3px; }
 .holiday-stripe--us           { background: #2563eb; }
 
 /* Minor holiday name text is slightly muted */
