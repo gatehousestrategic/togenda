@@ -57,6 +57,7 @@ function escHtml(str) {
 
 /* ── Holiday loading ────────────────────────────────────────────── */
 async function loadAllHolidays() {
+  holidays = [];   // clear before (re-)loading to prevent duplicates
   const thisYear = new Date().getFullYear();
   await Promise.all([
     loadJewishHolidays(thisYear),
@@ -69,15 +70,19 @@ async function loadJewishHolidays(thisYear) {
   const seen  = new Set();
   for (const year of years) {
     try {
-      const res  = await fetch(`https://www.hebcal.com/hebcal?v=1&cfg=json&maj=on&year=${year}&month=x&c=off`);
+      const res  = await fetch(
+        `https://www.hebcal.com/hebcal?v=1&cfg=json&maj=on&min=on&mf=on&year=${year}&month=x&c=off`
+      );
       const data = await res.json();
       (data.items || [])
-        .filter(h => h.category === 'holiday')
+        .filter(h => ['holiday','minor','mf'].includes(h.category))
         .forEach(h => {
           const date  = h.date.slice(0, 10);
           const title = cleanJewishTitle(h.title);
           const key   = `${date}|${title}`;
-          if (!seen.has(key)) { seen.add(key); holidays.push({ date, title, type: 'jewish' }); }
+          // major holidays have category 'holiday'; everything else is minor
+          const type  = h.category === 'holiday' ? 'jewish' : 'jewish-minor';
+          if (!seen.has(key)) { seen.add(key); holidays.push({ date, title, type }); }
         });
     } catch {}
   }
@@ -362,16 +367,21 @@ function makeDashEventItem(ev) {
   return item;
 }
 
+function holidayLabel(type) {
+  if (type === 'jewish') return 'Jewish Holiday';
+  if (type === 'jewish-minor') return 'Jewish observance';
+  return 'Federal Holiday';
+}
+
 function makeHolidayItem(h) {
   const item = document.createElement('div');
   item.className = 'dash-event-item';
   item.style.cursor = 'default';
-  const isJewish = h.type === 'jewish';
   item.innerHTML = `
     <div class="holiday-stripe holiday-stripe--${h.type}"></div>
     <div class="event-info">
-      <div class="event-name">${escHtml(h.title)}</div>
-      <div class="event-meta holiday-meta">${isJewish ? 'Jewish Holiday' : 'Federal Holiday'}</div>
+      <div class="event-name${h.type === 'jewish-minor' ? ' event-name--minor' : ''}">${escHtml(h.title)}</div>
+      <div class="event-meta holiday-meta">${holidayLabel(h.type)}</div>
     </div>
   `;
   return item;
@@ -407,15 +417,17 @@ function renderCalendar() {
     const dayEvts     = eventsOnDate(dateStr);
     const dayHolidays = holidaysOnDate(dateStr);
 
-    const hasJewish = dayHolidays.some(h => h.type === 'jewish');
-    const hasUS     = dayHolidays.some(h => h.type === 'us');
+    const hasJewish      = dayHolidays.some(h => h.type === 'jewish');
+    const hasJewishMinor = !hasJewish && dayHolidays.some(h => h.type === 'jewish-minor');
+    const hasUS          = dayHolidays.some(h => h.type === 'us');
 
     const cell = document.createElement('div');
     cell.className = 'cal-cell'
-      + (isToday    ? ' today'    : '')
-      + (isSelected ? ' selected' : '')
-      + (hasJewish  ? ' has-holiday-jewish' : '')
-      + (hasUS      ? ' has-holiday-us'     : '');
+      + (isToday       ? ' today'               : '')
+      + (isSelected    ? ' selected'             : '')
+      + (hasJewish     ? ' has-holiday-jewish'   : '')
+      + (hasJewishMinor? ' has-holiday-jewish-minor' : '')
+      + (hasUS         ? ' has-holiday-us'       : '');
     cell.dataset.date = dateStr;
 
     const numEl = document.createElement('div');
@@ -516,8 +528,8 @@ function renderDaySheet(date) {
     item.innerHTML = `
       <div class="holiday-stripe holiday-stripe--${h.type}"></div>
       <div class="event-info">
-        <div class="event-name">${escHtml(h.title)}</div>
-        <div class="event-meta holiday-meta">${h.type === 'jewish' ? 'Jewish Holiday' : 'Federal Holiday'}</div>
+        <div class="event-name${h.type === 'jewish-minor' ? ' event-name--minor' : ''}">${escHtml(h.title)}</div>
+        <div class="event-meta holiday-meta">${holidayLabel(h.type)}</div>
       </div>
     `;
     list.appendChild(item);
