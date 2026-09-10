@@ -622,7 +622,7 @@ function requestNotifPermission() {
   const banner = document.getElementById('notif-banner');
   if (banner) {
     banner.classList.add('show');
-    banner.querySelector('button').addEventListener('click', () => {
+    document.getElementById('notif-allow').addEventListener('click', () => {
       Notification.requestPermission().then(p => {
         banner.classList.remove('show');
         if (p === 'granted') scheduleReminders();
@@ -734,8 +734,9 @@ function attachListeners() {
   // Notification banner
   const banner = document.createElement('div');
   banner.id = 'notif-banner';
-  banner.innerHTML = `<span>Enable reminders?</span><button>Allow</button>`;
+  banner.innerHTML = `<span>Enable reminders?</span><div style="display:flex;gap:0.5rem;flex-shrink:0"><button id="notif-allow">Allow</button><button id="notif-dismiss" style="background:rgba(255,255,255,0.15)">✕</button></div>`;
   document.getElementById('app-frame').appendChild(banner);
+  document.getElementById('notif-dismiss').addEventListener('click', () => banner.classList.remove('show'));
 }
 
 /* ── Invite ─────────────────────────────────────────────────────── */
