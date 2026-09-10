@@ -11,7 +11,7 @@ const EVENT_COLORS = [
 /* ── State ──────────────────────────────────────────────────────── */
 let db = null;
 let events = [];
-let jewishHolidays = [];          // [{date:'2025-09-22', title:'Rosh Hashana'}]
+let holidays = [];   // [{date, title, type: 'jewish'|'us'}]
 let viewDate = new Date();
 let selectedDate = null;
 let editingEventId = null;
@@ -41,8 +41,8 @@ function eventsOnDate(dateStr) {
   }).sort((a, b) => (a.start_time < b.start_time ? -1 : 1));
 }
 
-function holidaysOnDate(dateStr) {
-  return jewishHolidays.filter(h => h.date === dateStr);
+function holidaysOnDate(dateStr, type = null) {
+  return holidays.filter(h => h.date === dateStr && (!type || h.type === type));
 }
 
 function localDatetime(dateStr, timeStr) {
@@ -55,40 +55,69 @@ function escHtml(str) {
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-/* ── Jewish holidays (hebcal API) ───────────────────────────────── */
-async function loadJewishHolidays() {
+/* ── Holiday loading ────────────────────────────────────────────── */
+async function loadAllHolidays() {
   const thisYear = new Date().getFullYear();
-  const years = [thisYear - 1, thisYear, thisYear + 1, thisYear + 2];
-  const seen = new Set();
+  await Promise.all([
+    loadJewishHolidays(thisYear),
+    loadUSHolidays(thisYear),
+  ]);
+}
 
+async function loadJewishHolidays(thisYear) {
+  const years = [thisYear - 1, thisYear, thisYear + 1, thisYear + 2];
+  const seen  = new Set();
   for (const year of years) {
     try {
-      const res = await fetch(
-        `https://www.hebcal.com/hebcal?v=1&cfg=json&maj=on&year=${year}&month=x&c=off`
-      );
+      const res  = await fetch(`https://www.hebcal.com/hebcal?v=1&cfg=json&maj=on&year=${year}&month=x&c=off`);
       const data = await res.json();
       (data.items || [])
         .filter(h => h.category === 'holiday')
         .forEach(h => {
           const date  = h.date.slice(0, 10);
-          const title = cleanHolidayTitle(h.title);
+          const title = cleanJewishTitle(h.title);
           const key   = `${date}|${title}`;
-          if (!seen.has(key)) {
-            seen.add(key);
-            jewishHolidays.push({ date, title });
-          }
+          if (!seen.has(key)) { seen.add(key); holidays.push({ date, title, type: 'jewish' }); }
         });
-    } catch { /* offline / rate-limited — skip gracefully */ }
+    } catch {}
   }
 }
 
-function cleanHolidayTitle(title) {
-  // Remove Hebrew year ("5786") from end
+async function loadUSHolidays(thisYear) {
+  const years = [thisYear - 1, thisYear, thisYear + 1, thisYear + 2];
+  const seen  = new Set();
+  for (const year of years) {
+    try {
+      const res  = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/US`);
+      const data = await res.json();
+      (data || []).forEach(h => {
+        const date  = h.date;
+        const title = shortenUSTitle(h.localName || h.name);
+        const key   = `${date}|${title}`;
+        if (!seen.has(key)) { seen.add(key); holidays.push({ date, title, type: 'us' }); }
+      });
+    } catch {}
+  }
+}
+
+function cleanJewishTitle(title) {
   let t = title.replace(/\s+5\d{3}$/, '').trim();
-  // Collapse "Chanukah: N Candles?" → "Chanukah"
   t = t.replace(/^Chanukah:.*$/i, 'Chanukah');
-  // Collapse "Erev X" to just the holiday when both appear
   return t;
+}
+
+const US_TITLE_MAP = {
+  "Martin Luther King, Jr. Day": "MLK Day",
+  "Washington's Birthday": "Presidents' Day",
+  "Juneteenth National Independence Day": "Juneteenth",
+  "Thanksgiving Day": "Thanksgiving",
+  "Christmas Day": "Christmas",
+  "New Year's Day": "New Year's Day",
+  "Independence Day": "July 4th",
+};
+
+function shortenUSTitle(title) {
+  return US_TITLE_MAP[title] || title;
 }
 
 /* ── Boot ───────────────────────────────────────────────────────── */
@@ -208,8 +237,8 @@ async function startApp() {
     requestNotifPermission();
   }
 
-  // Load Jewish holidays in the background
-  loadJewishHolidays().then(() => {
+  // Load holidays in the background
+  loadAllHolidays().then(() => {
     renderDashboard();
     renderCalendar();
   });
@@ -337,11 +366,12 @@ function makeHolidayItem(h) {
   const item = document.createElement('div');
   item.className = 'dash-event-item';
   item.style.cursor = 'default';
+  const isJewish = h.type === 'jewish';
   item.innerHTML = `
-    <div class="holiday-star">✡</div>
+    <div class="holiday-stripe holiday-stripe--${h.type}"></div>
     <div class="event-info">
       <div class="event-name">${escHtml(h.title)}</div>
-      <div class="event-meta holiday-meta">Jewish Holiday</div>
+      <div class="event-meta holiday-meta">${isJewish ? 'Jewish Holiday' : 'Federal Holiday'}</div>
     </div>
   `;
   return item;
@@ -377,10 +407,15 @@ function renderCalendar() {
     const dayEvts     = eventsOnDate(dateStr);
     const dayHolidays = holidaysOnDate(dateStr);
 
+    const hasJewish = dayHolidays.some(h => h.type === 'jewish');
+    const hasUS     = dayHolidays.some(h => h.type === 'us');
+
     const cell = document.createElement('div');
     cell.className = 'cal-cell'
       + (isToday    ? ' today'    : '')
-      + (isSelected ? ' selected' : '');
+      + (isSelected ? ' selected' : '')
+      + (hasJewish  ? ' has-holiday-jewish' : '')
+      + (hasUS      ? ' has-holiday-us'     : '');
     cell.dataset.date = dateStr;
 
     const numEl = document.createElement('div');
@@ -388,14 +423,13 @@ function renderCalendar() {
     numEl.textContent = d;
     cell.appendChild(numEl);
 
-    // Jewish holiday indicator
-    if (dayHolidays.length) {
-      const hEl = document.createElement('div');
-      hEl.className = 'holiday-dot';
-      hEl.title = dayHolidays.map(h => h.title).join(', ');
-      hEl.textContent = '✡';
-      cell.appendChild(hEl);
-    }
+    // Holiday name bars
+    dayHolidays.forEach(h => {
+      const bar = document.createElement('div');
+      bar.className = `holiday-bar holiday-bar--${h.type}`;
+      bar.textContent = h.title;
+      cell.appendChild(bar);
+    });
 
     // Event dots / bars
     const dotsEl = document.createElement('div');
@@ -476,15 +510,14 @@ function renderDaySheet(date) {
     return;
   }
 
-  // Jewish holidays first
   dayHolidays.forEach(h => {
     const item = document.createElement('div');
     item.className = 'event-item';
     item.innerHTML = `
-      <div class="holiday-star">✡</div>
+      <div class="holiday-stripe holiday-stripe--${h.type}"></div>
       <div class="event-info">
         <div class="event-name">${escHtml(h.title)}</div>
-        <div class="event-meta holiday-meta">Jewish Holiday</div>
+        <div class="event-meta holiday-meta">${h.type === 'jewish' ? 'Jewish Holiday' : 'Federal Holiday'}</div>
       </div>
     `;
     list.appendChild(item);
