@@ -111,8 +111,8 @@ async function loadJewishHolidays(thisYear) {
           const date  = h.date.slice(0, 10);
           const title = cleanJewishTitle(h.title);
           const key   = `${date}|${title}`;
-          // major holidays have category 'holiday'; everything else is minor
-          const type  = h.category === 'holiday' ? 'jewish' : 'jewish-minor';
+          // yomtov:true = full holiday; everything else (fasts, erev, CH"M, selichot) is minor
+          const type  = h.yomtov === true ? 'jewish' : 'jewish-minor';
           if (!seen.has(key)) { seen.add(key); holidays.push({ date, title, type }); }
         });
     } catch {}
