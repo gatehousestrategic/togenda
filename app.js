@@ -253,7 +253,10 @@ function setupNameScreen() {
 }
 
 /* ── App start ──────────────────────────────────────────────────── */
+let appStarted = false;
 async function startApp() {
+  if (appStarted) return;
+  appStarted = true;
   show('main-app');
   buildColorPicker();
   attachListeners();
