@@ -343,26 +343,65 @@ body {
   padding-bottom: calc(var(--tab-h) + var(--safe-bot) + 72px);
 }
 
-.dash-hero {
-  padding: 1.5rem 1.25rem 1rem;
+/* Week strip */
+.week-strip {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
   background: var(--surface);
   border-bottom: 1px solid var(--border);
+  padding: 0.6rem 0 0.5rem;
 }
 
-.dash-date {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text);
-  line-height: 1.2;
+.week-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.2rem 0;
+  border-radius: 8px;
+  color: inherit;
+  font-family: inherit;
 }
 
-.dash-sub {
-  font-size: 0.85rem;
-  color: var(--accent);
+.week-letter {
+  font-size: 0.62rem;
   font-weight: 600;
-  margin-top: 0.2rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
+.week-num {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text);
+  border-radius: 50%;
+}
+
+.week-day--today .week-num {
+  background: var(--accent);
+  color: white;
+  font-weight: 700;
+}
+
+.week-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.week-dot--on { background: var(--accent); }
+
+/* Sections */
 .dash-section { padding: 1rem 1.25rem 0; }
 
 .section-header {
@@ -373,23 +412,41 @@ body {
 }
 
 .section-title {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 700;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.07em;
 }
 
+.dash-today-date {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-top: 1px;
+}
+
 .dash-list { display: flex; flex-direction: column; gap: 0; }
 
 .dash-day-header {
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: var(--muted);
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
   margin-top: 1rem;
   margin-bottom: 0.25rem;
-  padding-bottom: 0.25rem;
+  padding-bottom: 0.3rem;
   border-bottom: 1px solid var(--border);
+}
+
+.dash-rel {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.dash-rel-date {
+  font-size: 0.72rem;
+  color: var(--muted);
 }
 
 .dash-event-item {

@@ -104,21 +104,21 @@
       <div id="view-dashboard" class="view">
         <div class="dash-scroll">
 
-          <div class="dash-hero">
-            <div id="dash-date" class="dash-date"></div>
-            <div id="dash-sub" class="dash-sub"></div>
-          </div>
+          <div id="dash-week-strip" class="week-strip"></div>
 
           <section class="dash-section">
             <div class="section-header">
-              <h3 class="section-title">Today</h3>
+              <div>
+                <div class="section-title">Today</div>
+                <div id="dash-date" class="dash-today-date"></div>
+              </div>
               <button id="dash-add-today" class="btn-small">+ Add</button>
             </div>
             <div id="dash-today-list" class="dash-list"></div>
           </section>
 
-          <section class="dash-section">
-            <h3 class="section-title">Upcoming</h3>
+          <section class="dash-section" style="margin-top:0.25rem">
+            <div class="section-title" style="margin-bottom:0.5rem">Coming up</div>
             <div id="dash-upcoming-list" class="dash-list"></div>
           </section>
 

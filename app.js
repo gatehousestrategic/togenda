@@ -235,7 +235,7 @@ async function startApp() {
   show('main-app');
   buildColorPicker();
   attachListeners();
-  switchView('dashboard');
+  switchView('calendar');
 
   // Load events
   const { data, error } = await db
@@ -302,37 +302,34 @@ function renderDashboard() {
   const today    = new Date();
   const todayStr = isoDate(today);
 
-  // Hero date
   document.getElementById('dash-date').textContent =
     today.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
 
-  const todayEvts     = eventsOnDate(todayStr);
-  const todayHolidays = holidaysOnDate(todayStr);
-  const total = todayEvts.length + todayHolidays.length;
-  document.getElementById('dash-sub').textContent =
-    total === 0 ? 'Nothing scheduled today' :
-    total === 1 ? '1 item today' : `${total} items today`;
+  renderWeekStrip(today, todayStr);
 
   // Today list
-  const todayList = document.getElementById('dash-today-list');
+  const todayEvts     = eventsOnDate(todayStr);
+  const todayHolidays = holidaysOnDate(todayStr);
+  const todayList     = document.getElementById('dash-today-list');
   todayList.innerHTML = '';
 
   todayHolidays.forEach(h => todayList.appendChild(makeHolidayItem(h)));
   todayEvts.forEach(ev => todayList.appendChild(makeDashEventItem(ev)));
 
-  if (!total) {
+  if (!todayEvts.length && !todayHolidays.length) {
     const el = document.createElement('div');
     el.className = 'dash-empty';
-    el.textContent = 'Clear schedule — enjoy your day!';
+    el.textContent = 'Nothing scheduled — enjoy the day!';
     todayList.appendChild(el);
   }
 
-  // Upcoming (next 30 days)
+  // Coming up — next 14 days, capped at 8 items total
   const upcomingList = document.getElementById('dash-upcoming-list');
   upcomingList.innerHTML = '';
-  let hasUpcoming = false;
+  let count = 0;
+  const CAP = 8;
 
-  for (let i = 1; i <= 30; i++) {
+  for (let i = 1; i <= 14 && count < CAP; i++) {
     const d    = new Date(today);
     d.setDate(today.getDate() + i);
     const dStr = isoDate(d);
@@ -341,24 +338,58 @@ function renderDashboard() {
     const dayHolidays = holidaysOnDate(dStr);
     if (!dayEvts.length && !dayHolidays.length) continue;
 
-    hasUpcoming = true;
+    const relLabel  = i === 1 ? 'Tomorrow' : `In ${i} days`;
+    const dateLabel = d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
 
     const hdr = document.createElement('div');
     hdr.className = 'dash-day-header';
-    hdr.textContent = i === 1
-      ? 'Tomorrow'
-      : d.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
+    hdr.innerHTML = `<span class="dash-rel">${relLabel}</span><span class="dash-rel-date">${dateLabel}</span>`;
     upcomingList.appendChild(hdr);
 
-    dayHolidays.forEach(h => upcomingList.appendChild(makeHolidayItem(h)));
-    dayEvts.forEach(ev => upcomingList.appendChild(makeDashEventItem(ev)));
+    dayHolidays.forEach(h => { if (count < CAP) { upcomingList.appendChild(makeHolidayItem(h)); count++; } });
+    dayEvts.forEach(ev    => { if (count < CAP) { upcomingList.appendChild(makeDashEventItem(ev)); count++; } });
   }
 
-  if (!hasUpcoming) {
+  if (!count) {
     const el = document.createElement('div');
     el.className = 'dash-empty';
-    el.textContent = 'Nothing in the next 30 days';
+    el.textContent = 'Nothing in the next 2 weeks';
     upcomingList.appendChild(el);
+  }
+}
+
+function renderWeekStrip(today, todayStr) {
+  const strip = document.getElementById('dash-week-strip');
+  if (!strip) return;
+  strip.innerHTML = '';
+
+  const startOfWeek = new Date(today);
+  startOfWeek.setDate(today.getDate() - today.getDay());
+
+  const LETTERS = ['S','M','T','W','T','F','S'];
+
+  for (let i = 0; i < 7; i++) {
+    const d    = new Date(startOfWeek);
+    d.setDate(startOfWeek.getDate() + i);
+    const dStr = isoDate(d);
+    const isToday  = dStr === todayStr;
+    const hasStuff = eventsOnDate(dStr).length > 0 || holidaysOnDate(dStr).length > 0;
+
+    const btn = document.createElement('button');
+    btn.className = 'week-day' + (isToday ? ' week-day--today' : '');
+    btn.innerHTML = `
+      <span class="week-letter">${LETTERS[i]}</span>
+      <span class="week-num">${d.getDate()}</span>
+      <span class="week-dot${hasStuff ? ' week-dot--on' : ''}"></span>
+    `;
+    btn.addEventListener('click', () => {
+      switchView('calendar');
+      viewDate = new Date(d.getFullYear(), d.getMonth(), 1);
+      selectedDate = new Date(d);
+      renderCalendar();
+      openDaySheet(new Date(d));
+    });
+    strip.appendChild(btn);
   }
 }
 
