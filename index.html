@@ -72,6 +72,12 @@
             <line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>
           </svg>
         </button>
+        <button id="settings-btn" class="icon-btn header-icon-btn" title="Settings" aria-label="Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
         <button id="signout-btn" class="icon-btn header-icon-btn" title="Sign out" aria-label="Sign out">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -247,6 +253,46 @@
     </div>
   </div>
   <div id="invite-backdrop" class="backdrop"></div>
+
+  <!-- ── Settings panel ──────────────────────────────────────────── -->
+  <div id="settings-panel" class="sheet" aria-modal="true" role="dialog">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <h3>Settings</h3>
+      <button id="settings-close" class="icon-btn" aria-label="Close">✕</button>
+    </div>
+    <div class="settings-body">
+
+      <div class="settings-section">
+        <div class="settings-label">Reminders</div>
+        <div class="settings-row">
+          <div class="settings-row-text">
+            <div class="settings-row-title">Receive reminders</div>
+            <div class="settings-row-sub" id="notif-status-label">Checking…</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="notif-global-toggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-label">Your name</div>
+        <div style="display:flex;gap:0.6rem;align-items:center">
+          <input id="settings-name" type="text" maxlength="30"
+                 style="flex:1;padding:0.65rem 0.9rem;border:1.5px solid var(--border);border-radius:10px;font-size:0.95rem;background:var(--bg);color:var(--text);outline:none;font-family:inherit">
+          <button id="settings-name-save" class="btn-small">Save</button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <button id="settings-signout" class="btn-danger" style="width:100%">Sign out</button>
+      </div>
+
+    </div>
+  </div>
+  <div id="settings-backdrop" class="backdrop"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="/config.js"></script>

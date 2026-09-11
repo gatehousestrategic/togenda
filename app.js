@@ -64,6 +64,28 @@ function escHtml(str) {
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+/* ── Notification preferences ───────────────────────────────────── */
+function notifGlobalOn()  { return localStorage.getItem('notif_opt_out') !== 'true'; }
+function setNotifGlobal(on) {
+  if (on) localStorage.removeItem('notif_opt_out');
+  else     localStorage.setItem('notif_opt_out', 'true');
+}
+
+function getMutedEvents() {
+  try { return new Set(JSON.parse(localStorage.getItem('muted_events') || '[]')); }
+  catch { return new Set(); }
+}
+function setMutedEvents(set) {
+  localStorage.setItem('muted_events', JSON.stringify([...set]));
+}
+function toggleMuteEvent(id) {
+  const s = getMutedEvents();
+  if (s.has(id)) s.delete(id); else s.add(id);
+  setMutedEvents(s);
+  scheduleReminders();
+}
+function isEventMuted(id) { return getMutedEvents().has(id); }
+
 /* ── Holiday loading ────────────────────────────────────────────── */
 async function loadAllHolidays() {
   holidays = [];   // clear before (re-)loading to prevent duplicates
@@ -567,6 +589,8 @@ function renderDaySheet(date) {
   dayEvts.forEach(ev => {
     const item = document.createElement('div');
     item.className = 'event-item';
+    const hasMuteToggle = ev.reminder_minutes && notifGlobalOn() && 'Notification' in window && Notification.permission === 'granted';
+    const muted = isEventMuted(ev.id);
     item.innerHTML = `
       <div class="event-stripe" style="background:${ev.color || EVENT_COLORS[0]}"></div>
       <div class="event-info">
@@ -574,9 +598,20 @@ function renderDaySheet(date) {
         <div class="event-meta">${ev.all_day ? 'All day' : (fmtTime(ev.start_time) + (ev.end_time ? ' – ' + fmtTime(ev.end_time) : ''))}</div>
         ${ev.description ? `<div class="event-meta">${escHtml(ev.description)}</div>` : ''}
         <div class="event-creator">Added by ${escHtml(ev.created_by)}</div>
+        ${hasMuteToggle ? `<button class="mute-toggle ${muted ? 'muted' : ''}" data-id="${ev.id}">
+          ${muted ? '🔕 Reminder off for me' : '🔔 Reminder on for me'}
+        </button>` : ''}
       </div>
     `;
-    item.addEventListener('click', () => openEventModal(ev));
+    item.querySelector('.event-info')?.addEventListener('click', () => openEventModal(ev));
+    const muteBtn = item.querySelector('.mute-toggle');
+    if (muteBtn) {
+      muteBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        toggleMuteEvent(ev.id);
+        renderDaySheet(date);
+      });
+    }
     list.appendChild(item);
   });
 }
@@ -693,6 +728,7 @@ async function deleteEvent() {
 /* ── Notifications / Reminders ──────────────────────────────────── */
 function requestNotifPermission() {
   if (!('Notification' in window) || Notification.permission !== 'default') return;
+  if (!notifGlobalOn()) return;
 
   // Show again if never dismissed, or if dismissed more than 3 days ago
   const dismissed = parseInt(localStorage.getItem('notif_dismissed') || '0', 10);
@@ -722,12 +758,15 @@ function scheduleReminders() {
   reminderTimers.forEach(clearTimeout);
   reminderTimers = [];
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  if (!notifGlobalOn()) return;
 
   const now     = Date.now();
   const horizon = now + 48 * 60 * 60 * 1000;
+  const muted   = getMutedEvents();
 
   events.forEach(ev => {
     if (!ev.reminder_minutes) return;
+    if (muted.has(ev.id)) return;
     const eventMs    = new Date(ev.start_time).getTime();
     const reminderMs = eventMs - ev.reminder_minutes * 60 * 1000;
     const delay      = reminderMs - now;
@@ -779,9 +818,41 @@ function attachListeners() {
     closeDaySheet();
   });
 
-  // Sign out
+  // Sign out (now in settings panel too)
   document.getElementById('signout-btn').addEventListener('click', async () => {
     if (!confirm('Sign out?')) return;
+    await db.auth.signOut();
+  });
+
+  // Settings panel
+  document.getElementById('settings-btn').addEventListener('click', openSettings);
+  document.getElementById('settings-close').addEventListener('click', closeSettings);
+  document.getElementById('settings-backdrop').addEventListener('click', closeSettings);
+
+  document.getElementById('notif-global-toggle').addEventListener('change', e => {
+    setNotifGlobal(e.target.checked);
+    updateNotifStatusLabel();
+    if (e.target.checked && 'Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().then(p => {
+        updateNotifStatusLabel();
+        if (p === 'granted') scheduleReminders();
+      });
+    } else {
+      scheduleReminders();
+    }
+  });
+
+  document.getElementById('settings-name-save').addEventListener('click', () => {
+    const val = document.getElementById('settings-name').value.trim();
+    if (!val) return;
+    localStorage.setItem('cal_name', val);
+    document.getElementById('settings-name-save').textContent = 'Saved!';
+    setTimeout(() => document.getElementById('settings-name-save').textContent = 'Save', 1500);
+  });
+
+  document.getElementById('settings-signout').addEventListener('click', async () => {
+    if (!confirm('Sign out?')) return;
+    closeSettings();
     await db.auth.signOut();
   });
 
@@ -822,6 +893,41 @@ function attachListeners() {
   banner.id = 'notif-banner';
   banner.innerHTML = `<span>Enable reminders?</span><div style="display:flex;gap:0.5rem;flex-shrink:0"><button id="notif-allow">Allow</button><button id="notif-dismiss" style="background:rgba(255,255,255,0.15)">✕</button></div>`;
   document.getElementById('app-frame').appendChild(banner);
+}
+
+/* ── Settings panel ─────────────────────────────────────────────── */
+function openSettings() {
+  // Global toggle state
+  const toggle = document.getElementById('notif-global-toggle');
+  toggle.checked = notifGlobalOn();
+  updateNotifStatusLabel();
+
+  // Name
+  document.getElementById('settings-name').value = localStorage.getItem('cal_name') || '';
+
+  document.getElementById('settings-panel').classList.add('open');
+  document.getElementById('settings-backdrop').classList.add('visible');
+}
+
+function closeSettings() {
+  document.getElementById('settings-panel').classList.remove('open');
+  document.getElementById('settings-backdrop').classList.remove('visible');
+}
+
+function updateNotifStatusLabel() {
+  const label = document.getElementById('notif-status-label');
+  if (!label) return;
+  if (!notifGlobalOn()) {
+    label.textContent = 'Turned off';
+    return;
+  }
+  if (!('Notification' in window)) {
+    label.textContent = 'Not supported on this browser';
+    return;
+  }
+  if (Notification.permission === 'granted') label.textContent = 'Allowed by this device';
+  else if (Notification.permission === 'denied') label.textContent = 'Blocked — enable in device Settings';
+  else label.textContent = 'Permission not yet granted';
 }
 
 /* ── Invite ─────────────────────────────────────────────────────── */
