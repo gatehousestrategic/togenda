@@ -29,6 +29,15 @@ function fmtTime(iso) {
   return new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 }
 
+function fmtTimeShort(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const h = d.getHours(), m = d.getMinutes();
+  const ampm = h >= 12 ? 'p' : 'a';
+  const hour = h % 12 || 12;
+  return m ? `${hour}:${String(m).padStart(2,'0')}${ampm}` : `${hour}${ampm}`;
+}
+
 function fmtFullDate(d) {
   return d.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 }
@@ -443,34 +452,23 @@ function renderCalendar() {
       cell.appendChild(bar);
     });
 
-    // Event dots / bars
-    const dotsEl = document.createElement('div');
-    dotsEl.className = 'event-dots';
-
-    const MAX = 2;
+    // Event bars — always show name (+ time for timed events)
+    const MAX = 3;
     const shown = dayEvts.slice(0, MAX);
     const extra = dayEvts.length - MAX;
 
     shown.forEach(ev => {
-      if (ev.all_day) {
-        const bar = document.createElement('div');
-        bar.className = 'event-bar';
-        bar.style.background = ev.color || EVENT_COLORS[0];
-        bar.textContent = ev.title;
-        cell.appendChild(bar);
-      } else {
-        const dot = document.createElement('div');
-        dot.className = 'event-dot';
-        dot.style.background = ev.color || EVENT_COLORS[0];
-        dotsEl.appendChild(dot);
-      }
+      const bar = document.createElement('div');
+      bar.className = 'event-bar';
+      bar.style.background = ev.color || EVENT_COLORS[0];
+      bar.textContent = ev.all_day ? ev.title : `${fmtTimeShort(ev.start_time)} ${ev.title}`;
+      cell.appendChild(bar);
     });
 
-    if (dotsEl.children.length) cell.appendChild(dotsEl);
     if (extra > 0) {
       const more = document.createElement('div');
       more.className = 'more-label';
-      more.textContent = `+${extra}`;
+      more.textContent = `+${extra} more`;
       cell.appendChild(more);
     }
 

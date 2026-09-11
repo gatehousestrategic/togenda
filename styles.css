@@ -234,9 +234,10 @@ body {
 /* ── Calendar grid ────────────────────────────────────────────── */
 .cal-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   background: var(--bg);
   gap: 1px;
 }
@@ -250,10 +251,13 @@ body {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  min-width: 0;      /* prevent grid blowout */
+  overflow: hidden;  /* clip any overflow */
+  width: 100%;
 }
 
 @media (min-width: 600px) {
-  .cal-cell { min-height: 100px; }
+  .cal-cell { min-height: 110px; }
 }
 
 .cal-cell:active { background: var(--bg); }
