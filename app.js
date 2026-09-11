@@ -818,14 +818,8 @@ function attachListeners() {
     closeDaySheet();
   });
 
-  // Sign out (now in settings panel too)
-  document.getElementById('signout-btn').addEventListener('click', async () => {
-    if (!confirm('Sign out?')) return;
-    await db.auth.signOut();
-  });
-
-  // Settings panel
-  document.getElementById('settings-btn').addEventListener('click', openSettings);
+  // More tab → settings panel
+  document.getElementById('tab-more').addEventListener('click', openSettings);
   document.getElementById('settings-close').addEventListener('click', closeSettings);
   document.getElementById('settings-backdrop').addEventListener('click', closeSettings);
 
@@ -856,10 +850,7 @@ function attachListeners() {
     await db.auth.signOut();
   });
 
-  // Invite
-  document.getElementById('invite-btn').addEventListener('click', openInviteModal);
-  document.getElementById('invite-close').addEventListener('click', closeInviteModal);
-  document.getElementById('invite-backdrop').addEventListener('click', closeInviteModal);
+  // Invite (now inside settings panel)
   document.getElementById('invite-submit').addEventListener('click', sendInvite);
   document.getElementById('invite-email').addEventListener('keydown', e => {
     if (e.key === 'Enter') sendInvite();
@@ -897,6 +888,12 @@ function attachListeners() {
 
 /* ── Settings panel ─────────────────────────────────────────────── */
 function openSettings() {
+  // Reset invite
+  document.getElementById('invite-email').value = '';
+  document.getElementById('invite-status').classList.add('hidden');
+  document.getElementById('invite-submit').disabled = false;
+  document.getElementById('invite-submit').textContent = 'Send Invite';
+
   // Global toggle state
   const toggle = document.getElementById('notif-global-toggle');
   toggle.checked = notifGlobalOn();
@@ -931,20 +928,6 @@ function updateNotifStatusLabel() {
 }
 
 /* ── Invite ─────────────────────────────────────────────────────── */
-function openInviteModal() {
-  document.getElementById('invite-email').value = '';
-  document.getElementById('invite-status').classList.add('hidden');
-  document.getElementById('invite-submit').disabled = false;
-  document.getElementById('invite-submit').textContent = 'Send Invite';
-  document.getElementById('invite-modal').classList.add('open');
-  document.getElementById('invite-backdrop').classList.add('visible');
-  setTimeout(() => document.getElementById('invite-email').focus(), 300);
-}
-
-function closeInviteModal() {
-  document.getElementById('invite-modal').classList.remove('open');
-  document.getElementById('invite-backdrop').classList.remove('visible');
-}
 
 async function sendInvite() {
   const email  = document.getElementById('invite-email').value.trim();
