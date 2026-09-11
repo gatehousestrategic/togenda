@@ -693,17 +693,29 @@ async function deleteEvent() {
 /* ── Notifications / Reminders ──────────────────────────────────── */
 function requestNotifPermission() {
   if (!('Notification' in window) || Notification.permission !== 'default') return;
+
+  // Show again if never dismissed, or if dismissed more than 3 days ago
+  const dismissed = parseInt(localStorage.getItem('notif_dismissed') || '0', 10);
+  const threeDays = 3 * 24 * 60 * 60 * 1000;
+  if (dismissed && Date.now() - dismissed < threeDays) return;
+
   const banner = document.getElementById('notif-banner');
-  if (banner) {
-    banner.classList.add('show');
-    document.getElementById('notif-allow').addEventListener('click', () => {
-      Notification.requestPermission().then(p => {
-        banner.classList.remove('show');
-        if (p === 'granted') scheduleReminders();
-      });
-    }, { once: true });
-    setTimeout(() => banner.classList.remove('show'), 8000);
-  }
+  if (!banner) return;
+
+  banner.classList.add('show');
+
+  document.getElementById('notif-allow').addEventListener('click', () => {
+    Notification.requestPermission().then(p => {
+      banner.classList.remove('show');
+      localStorage.removeItem('notif_dismissed');
+      if (p === 'granted') scheduleReminders();
+    });
+  }, { once: true });
+
+  document.getElementById('notif-dismiss').addEventListener('click', () => {
+    banner.classList.remove('show');
+    localStorage.setItem('notif_dismissed', Date.now());
+  }, { once: true });
 }
 
 function scheduleReminders() {
@@ -810,7 +822,6 @@ function attachListeners() {
   banner.id = 'notif-banner';
   banner.innerHTML = `<span>Enable reminders?</span><div style="display:flex;gap:0.5rem;flex-shrink:0"><button id="notif-allow">Allow</button><button id="notif-dismiss" style="background:rgba(255,255,255,0.15)">✕</button></div>`;
   document.getElementById('app-frame').appendChild(banner);
-  document.getElementById('notif-dismiss').addEventListener('click', () => banner.classList.remove('show'));
 }
 
 /* ── Invite ─────────────────────────────────────────────────────── */
