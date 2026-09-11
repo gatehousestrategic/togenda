@@ -111,8 +111,10 @@ async function loadJewishHolidays(thisYear) {
           const date  = h.date.slice(0, 10);
           const title = cleanJewishTitle(h.title);
           const key   = `${date}|${title}`;
-          // yomtov:true = full holiday; everything else (fasts, erev, CH"M, selichot) is minor
-          const type  = h.yomtov === true ? 'jewish' : 'jewish-minor';
+          // yomtov:true = biblical festival; also treat major rabbinic holidays as full
+          const isMajor = h.yomtov === true
+            || /^(Purim|Shushan Purim|Chanukah|Tisha B'Av)$/i.test(title);
+          const type  = isMajor ? 'jewish' : 'jewish-minor';
           if (!seen.has(key)) { seen.add(key); holidays.push({ date, title, type }); }
         });
     } catch {}
