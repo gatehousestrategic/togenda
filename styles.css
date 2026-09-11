@@ -2,15 +2,15 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --accent:    #6366f1;
-  --accent-d:  #4f46e5;
-  --bg:        #f4f4fb;
-  --surface:   #ffffff;
-  --text:      #1e1e2e;
-  --muted:     #6b7280;
-  --border:    #e5e7eb;
-  --danger:    #ef4444;
-  --holiday:   #d97706;
+  --accent:    #5c7a52;
+  --accent-d:  #496642;
+  --bg:        #f5f2ec;
+  --surface:   #faf9f6;
+  --text:      #2c2926;
+  --muted:     #8a8478;
+  --border:    #e6e0d4;
+  --danger:    #c0392b;
+  --holiday:   #b5651d;
   --radius:    14px;
   --tab-h:     62px;
   --safe-top:  env(safe-area-inset-top, 0px);
@@ -19,12 +19,12 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg:      #0f0f1a;
-    --surface: #1a1a2e;
-    --text:    #e8e8f0;
-    --muted:   #9ca3af;
-    --border:  #2d2d44;
-    --holiday: #f59e0b;
+    --bg:      #1a1814;
+    --surface: #242018;
+    --text:    #ede8df;
+    --muted:   #9a9488;
+    --border:  #3a3428;
+    --holiday: #d4845a;
   }
 }
 
@@ -42,7 +42,7 @@ body {
 /* ── Desktop shell ────────────────────────────────────────────── */
 @media (min-width: 600px) {
   body {
-    background: #ddddf0;
+    background: #ddd8ce;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -52,7 +52,7 @@ body {
 }
 
 @media (min-width: 600px) and (prefers-color-scheme: dark) {
-  body { background: #09090f; }
+  body { background: #0f0d0a; }
 }
 
 /* ── App frame ────────────────────────────────────────────────── */
@@ -322,16 +322,16 @@ body {
   margin-top: 1px;
   line-height: 1.4;
 }
-.holiday-bar--jewish       { background: #d97706; color: white; }
-.holiday-bar--jewish-minor { background: transparent; color: #92400e; font-style: italic; font-weight: 400; font-size: 0.52rem; padding-left: 2px; }
-.holiday-bar--us           { background: #2563eb; color: white; }
+.holiday-bar--jewish       { background: #b5651d; color: white; }
+.holiday-bar--jewish-minor { background: transparent; color: #8b4a15; font-style: italic; font-weight: 400; font-size: 0.52rem; padding-left: 2px; }
+.holiday-bar--us           { background: #4a7c6f; color: white; }
 
 /* Cell shading on holiday days */
-.cal-cell.has-holiday-jewish       { background: #fffbeb; }
-.cal-cell.has-holiday-us           { background: #eff6ff; }
+.cal-cell.has-holiday-jewish       { background: #fdf4ea; }
+.cal-cell.has-holiday-us           { background: #eef4f2; }
 @media (prefers-color-scheme: dark) {
-  .cal-cell.has-holiday-jewish { background: #1c1505; }
-  .cal-cell.has-holiday-us     { background: #05101f; }
+  .cal-cell.has-holiday-jewish { background: #1e1408; }
+  .cal-cell.has-holiday-us     { background: #0a1613; }
 }
 
 .more-label { font-size: 0.55rem; color: var(--muted); padding: 0 2px; }
@@ -478,9 +478,9 @@ body {
   flex-shrink: 0;
   align-self: stretch;
 }
-.holiday-stripe--jewish       { background: #d97706; }
-.holiday-stripe--jewish-minor { background: #fde68a; width: 3px; }
-.holiday-stripe--us           { background: #2563eb; }
+.holiday-stripe--jewish       { background: #b5651d; }
+.holiday-stripe--jewish-minor { background: #d4a574; width: 3px; }
+.holiday-stripe--us           { background: #4a7c6f; }
 
 /* Minor holiday name text is slightly muted */
 .event-name--minor { color: var(--muted); font-weight: 500; }
